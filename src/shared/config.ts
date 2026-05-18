@@ -1,6 +1,9 @@
 export const appConfig = {
   appName: "mesh-tap-symphony",
   storagePrefix: "mesh-tap-symphony",
+  description:
+    "Peer-to-peer mesh drum kit. Each phone plays a different drum; tap in sync and the room becomes a loop.",
+  accentHex: "#ff5e7a",
   version: __APP_VERSION__,
   commit: __GIT_COMMIT__,
   repositoryUrl: "https://github.com/baditaflorin/mesh-tap-symphony",

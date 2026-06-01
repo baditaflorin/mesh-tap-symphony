@@ -30,12 +30,10 @@ test("a peer's taps are recorded into the shared loop and appear on the other pe
 }) => {
   const { a, b, cleanup } = await openTwoPeers(browser, baseURL ?? "", { storagePrefix });
   try {
-    // Peer A: pick a distinct drum (snare) so its taps show as "other" marks on
-    // peer B's track (B keeps the default kick). Set BEFORE arming.
-    await openSettings(a);
-    await a.locator('select:has(option[value="snare"])').selectOption("snare");
-    await a.getByRole("button", { name: "Close" }).click();
-    await expect(a.locator(".mesh-settings-drawer, .settings-drawer")).toHaveCount(0);
+    // Peer A: pick a distinct drum (snare) right on the arm screen so its taps
+    // show as "other" marks on peer B's track (B keeps the default kick).
+    await a.getByRole("radio", { name: /snare/i }).click();
+    await expect(a.getByRole("radio", { name: /snare/i })).toHaveAttribute("aria-checked", "true");
 
     // Both peers join the band (arms the mesh room + audio).
     await a.getByRole("button", { name: /Join the band/i }).click();
@@ -72,11 +70,40 @@ test("a peer's taps are recorded into the shared loop and appear on the other pe
   }
 });
 
-/** Open the MeshShell settings drawer if it isn't already open. */
-async function openSettings(page: import("@playwright/test").Page) {
-  const drawer = page.locator(".mesh-settings-drawer, .settings-drawer");
-  if ((await drawer.count()) === 0) {
-    await page.getByLabel("Open settings").click();
+/**
+ * Second core cross-peer interaction: "Clear loop" is shared, not local.
+ *
+ * `onClear` deletes from the shared `room.doc.getArray("taps")`, so one peer
+ * pressing it must wipe the loop on the OTHER peer too. This FAILS if Clear
+ * only emptied a local `useState` array — peer B would still hold the taps.
+ */
+test("clearing the loop on one peer wipes it on the other peer", async ({ browser, baseURL }) => {
+  const { a, b, cleanup } = await openTwoPeers(browser, baseURL ?? "", { storagePrefix });
+  try {
+    await a.getByRole("button", { name: /Join the band/i }).click();
+    await b.getByRole("button", { name: /Join the band/i }).click();
+    await expect(a.locator(".tap-stage")).toBeVisible();
+    await expect(b.locator(".tap-stage")).toBeVisible();
+
+    // Peer A records a few taps; both peers' HUDs converge to the same count.
+    const N = 3;
+    for (let i = 0; i < N; i++) {
+      await a.locator(".tap-stage").click({ position: { x: 120 + i * 20, y: 200 } });
+      await a.waitForTimeout(60);
+    }
+    await expect(a.locator(".tap-hud")).toHaveText(new RegExp(`${N} taps in loop`));
+    await expect(b.locator(".tap-hud")).toHaveText(new RegExp(`${N} taps in loop`), {
+      timeout: 10_000,
+    });
+
+    // Peer B clears the shared loop.
+    await b.getByRole("button", { name: /Clear loop/i }).click();
+
+    // CROSS-PEER ASSERTION: the loop is now empty on BOTH peers.
+    await expect(b.locator(".tap-hud")).toHaveText(/0 taps in loop/, { timeout: 10_000 });
+    await expect(a.locator(".tap-hud")).toHaveText(/0 taps in loop/, { timeout: 10_000 });
+    await expect(a.locator(".tap-loop-mark")).toHaveCount(0);
+  } finally {
+    await cleanup();
   }
-  await expect(page.locator(".mesh-settings-drawer, .settings-drawer").first()).toBeVisible();
-}
+});

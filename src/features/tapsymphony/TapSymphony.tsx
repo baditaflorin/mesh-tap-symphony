@@ -11,9 +11,10 @@ type TapEvent = { slot: Slot; dt: number; id: string };
 type Props = {
   roomId: string;
   slot: Slot;
+  onSlotChange?: (next: Slot) => void;
 };
 
-export function TapSymphony({ roomId, slot }: Props) {
+export function TapSymphony({ roomId, slot, onSlotChange }: Props) {
   const [armed, setArmed] = useState(false);
   const [phase, setPhase] = useState(0);
   const [taps, setTaps] = useState<TapEvent[]>([]);
@@ -111,16 +112,32 @@ export function TapSymphony({ roomId, slot }: Props) {
       <div className="tap-arm">
         <h1>mesh-tap-symphony</h1>
         <p>
-          Each phone is one drum sound. Tap the screen to play your sound. Every tap is recorded
-          into a 30-second loop that replays on every phone, in mesh-time sync. The group has
-          accidentally composed a beat together.
+          Open this on a few phones in the same room. Each phone is one drum — tap the screen to
+          play it. Every tap joins a shared 30-second loop that replays on all phones at once, so
+          you jam a beat together.
         </p>
-        <p className="tap-meta">
-          Your drum:{" "}
-          <strong style={{ color: SLOT_INFO[slot].color }}>
-            {SLOT_INFO[slot].emoji} {SLOT_INFO[slot].label}
-          </strong>
-        </p>
+        <p className="tap-meta">This phone plays:</p>
+        <div className="tap-arm-drums" role="radiogroup" aria-label="Pick this phone's drum">
+          {ALL_SLOTS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={s === slot}
+              className={`tap-arm-drum${s === slot ? " is-selected" : ""}`}
+              style={{ "--accent": SLOT_INFO[s].color } as React.CSSProperties}
+              onClick={() => {
+                audioCtxRef.current ??= new AudioContext();
+                void audioCtxRef.current.resume();
+                playDrum(audioCtxRef.current, s, audioCtxRef.current.currentTime);
+                onSlotChange?.(s);
+              }}
+            >
+              <span className="tap-arm-drum-emoji">{SLOT_INFO[s].emoji}</span>
+              {SLOT_INFO[s].label}
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           className="tap-arm-button"
@@ -132,7 +149,7 @@ export function TapSymphony({ roomId, slot }: Props) {
         >
           Join the band
         </button>
-        <p className="tap-hint">Pick a different drum per phone in Settings.</p>
+        <p className="tap-hint">Pick a different drum on each phone so the beat has variety.</p>
       </div>
     );
   }
@@ -183,12 +200,13 @@ export function TapSymphony({ roomId, slot }: Props) {
       <button
         type="button"
         className="tap-clear"
+        title="Wipes the shared loop on every phone"
         onClick={(e) => {
           e.stopPropagation();
           onClear();
         }}
       >
-        Clear loop
+        Clear loop for everyone
       </button>
     </div>
   );

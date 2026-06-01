@@ -31,7 +31,7 @@ export function App() {
       onRoomChange={setRoomId}
       settingsExtras={<SettingsExtras slot={slot} onSlotChange={setSlot} />}
     >
-      <TapSymphony roomId={roomId} slot={slot} />
+      <TapSymphony roomId={roomId} slot={slot} onSlotChange={setSlot} />
     </MeshShell>
   );
 }

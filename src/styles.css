@@ -73,6 +73,46 @@ body,
   cursor: pointer;
 }
 
+.tap-arm-drums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  max-width: 28rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.tap-arm-drum {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 4.5rem;
+  padding: 0.6rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.tap-arm-drum:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.tap-arm-drum.is-selected {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.tap-arm-drum-emoji {
+  font-size: 1.6rem;
+}
+
 .tap-hint {
   font-size: 0.8rem;
   color: var(--muted);

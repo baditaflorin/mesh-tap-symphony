@@ -9,7 +9,9 @@
 
 **Live:** https://baditaflorin.github.io/mesh-tap-symphony/
 
-Each phone is assigned a single drum sound — kick, snare, hi-hat, clap, cowbell, rim. Tap the screen to play your sound. Every tap, from every phone, is appended to a shared 30-second loop. The loop runs on every phone simultaneously, so the group accidentally composes a beat together.
+Each phone is one drum sound — kick, snare, hi-hat, clap, cowbell, rim. Tap the screen to play your sound. Every tap, from every phone, is appended to a shared 30-second loop. The loop runs on every phone simultaneously, so the group accidentally composes a beat together.
+
+**Try it:** open the link in two browser tabs, pick a different drum in each, hit **Join the band**, and tap. Each tab hears both drums replay together every 30 seconds.
 
 ## How it works
 
@@ -18,7 +20,7 @@ Each phone is assigned a single drum sound — kick, snare, hi-hat, clap, cowbel
 3. Each tap is appended to a shared `Y.Array<{ slot, dt, id }>`, where `dt` is the position inside the 30-second loop in milliseconds.
 4. Every phone, every frame, looks at incoming tap events whose `dt` is about to be crossed and schedules them through Web Audio at `currentTime + (dt - loopT)/1000`. Sample-accurate playback locally; mesh-time-synchronized across phones.
 
-The loop is **rolling** — your taps replay every 30 seconds until someone hits **Clear loop**. The track view at the top shows everyone's marks; your own slot's marks are highlighted in your accent color.
+The loop is **rolling** — your taps replay every 30 seconds until someone hits **Clear loop for everyone** (it wipes the shared loop on all phones). The track view at the top shows everyone's marks; your own slot's marks are highlighted in your accent color.
 
 ## Drums
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MeshShell } from "@baditaflorin/mesh-common";
+import { MeshShell, MeshErrorBoundary } from "@baditaflorin/mesh-common";
 import { TapSymphony } from "./features/tapsymphony/TapSymphony";
 import { ALL_SLOTS, type Slot } from "./features/tapsymphony/drums";
 import { SettingsExtras } from "./features/settings/SettingsExtras";
@@ -31,7 +31,9 @@ export function App() {
       onRoomChange={setRoomId}
       settingsExtras={<SettingsExtras slot={slot} onSlotChange={setSlot} />}
     >
-      <TapSymphony roomId={roomId} slot={slot} onSlotChange={setSlot} />
+      <MeshErrorBoundary appName={appConfig.appName} version={appConfig.version}>
+        <TapSymphony roomId={roomId} slot={slot} onSlotChange={setSlot} />
+      </MeshErrorBoundary>
     </MeshShell>
   );
 }

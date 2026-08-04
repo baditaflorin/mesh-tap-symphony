@@ -8,6 +8,33 @@ const LOOP_MS = 30000;
 
 type TapEvent = { slot: Slot; dt: number; id: string };
 
+const KNOWN_SLOTS: ReadonlySet<string> = new Set(ALL_SLOTS);
+
+/**
+ * The `taps` Y.Array is a shared CRDT — any peer in the room (malicious,
+ * buggy, or running a stale/forked client) can push arbitrary values into
+ * it. Every peer, including this one, mirrors that array straight into
+ * render (`SLOT_INFO[t.slot].color`, `t.dt / LOOP_MS`, `key={t.id}`), so an
+ * unvalidated entry with e.g. an unknown `slot` crashes the whole component
+ * for everyone in the room — permanently, since the bad entry stays in the
+ * shared doc and re-triggers the crash for every later joiner too. Validate
+ * at the CRDT→state boundary and silently drop anything malformed instead.
+ */
+function isValidTapEvent(v: unknown): v is TapEvent {
+  if (!v || typeof v !== "object") return false;
+  const t = v as Partial<TapEvent>;
+  return (
+    typeof t.id === "string" &&
+    t.id.length > 0 &&
+    typeof t.slot === "string" &&
+    KNOWN_SLOTS.has(t.slot) &&
+    typeof t.dt === "number" &&
+    Number.isFinite(t.dt) &&
+    t.dt >= 0 &&
+    t.dt < LOOP_MS
+  );
+}
+
 type Props = {
   roomId: string;
   slot: Slot;
@@ -42,10 +69,11 @@ export function TapSymphony({ roomId, slot, onSlotChange }: Props) {
     };
   }, [mesh]);
 
-  // Mirror Yjs Y.Array → local state
+  // Mirror Yjs Y.Array → local state, filtering out anything a peer wrote
+  // that doesn't match the expected tap shape (see isValidTapEvent above).
   useEffect(() => {
     if (!mesh) return undefined;
-    const update = () => setTaps(mesh.events.toArray());
+    const update = () => setTaps(mesh.events.toArray().filter(isValidTapEvent));
     mesh.events.observe(update);
     update();
     return () => mesh.events.unobserve(update);
